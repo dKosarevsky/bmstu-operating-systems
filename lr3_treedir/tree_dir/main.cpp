@@ -18,7 +18,7 @@ struct ElementTree{
 #define MAX_LENGTH_NAME_FILE 256
 #define MAX_LENGTH_PATH 4096
 #define INDENT 5
-#define ROOT  "/home/ilyaps/bmstu/os/lr3_treedir/dir_root/"
+#define ROOT  "/home/ilyaps/bmstu/os/lr3_treedir/tree_dir/dir_root/"
 
 #define ERR_CHDIR 1
 
@@ -29,7 +29,7 @@ int main() {
 
     struct ElementTree head;
     head.name = (char *) ".";
-    head.level = INDENT;
+    head.level = 0;
 
     head.parent = (char *) malloc (MAX_LENGTH_PATH * sizeof(char));
     head.parent[0] = '\0';
@@ -62,8 +62,8 @@ int main() {
             continue;
         }
 
-        printf("%*s%s\n", head.level, "-(D) ", head.name);
-        head.level += INDENT;
+        printf("%*s%s\n", head.level * INDENT, "-(D) ", head.name);
+        head.level++ ;
 
         while ((dirp = readdir(dp)) != NULL) {
             if (strcmp(dirp->d_name, ".") == 0 || strcmp(dirp->d_name, "..") == 0) {
@@ -77,7 +77,7 @@ int main() {
             }
 
             if (S_ISDIR(statbuf.st_mode) == 0) {
-                printf("%*s%s\n", head.level, "-(F) ", dirp->d_name);
+                printf("%*s%s\t[%ld b]\n", head.level * INDENT, "-(F) ", dirp->d_name, statbuf.st_size);
                 continue;
             }
 
