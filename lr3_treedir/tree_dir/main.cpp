@@ -1,100 +1,105 @@
 #include <stdio.h>
 #include <unistd.h>
-#include<stack>
+#include <stack>
 #include <dirent.h>
 #include <cstring>
 #include <sys/stat.h>
-#include <malloc.h>
 #include <cstdlib>
 
 using namespace std;
 
+//отступ для красивого вывода на экран
+#define INDENT 5
+
+//откуда строить дерево
+#define ROOT  "/home/ilyaps/bmstu/os/lr3_treedir/tree_dir/dir_root/"
+
+//начальный уровень в дереве
+#define START_LEVEL 0
+
+#define CURRENT_DIR "."
+#define PARENT_DIR ".."
+
+#define ERR_NUM_CHDIR 1
+#define ERR_INFO_CHDIR "error call CHDIR"
+
+#define ERR_INFO_CALL_LSTAT "error call lstat"
+
+#define DIR_IS_NOT_ASSESS "directory is not accessible"
+
 struct ElementTree{
-    char* parent;
     char* name;
     int level;
 } ;
 
-#define MAX_LENGTH_NAME_FILE 256
-#define MAX_LENGTH_PATH 4096
-#define INDENT 5
-#define ROOT  "/home/ilyaps/bmstu/os/lr3_treedir/tree_dir/dir_root/"
-
-#define ERR_CHDIR 1
-
 int main() {
-    DIR *dp;
-    struct dirent *dirp;
-    struct stat statbuf;
+    //уровень в дереве, на котором мы находимся на текущей итерации
+    int current_level = START_LEVEL;
+    if (chdir(ROOT) < 0) {
+        printf(ERR_INFO_CHDIR);
+        exit(ERR_NUM_CHDIR);
+    }
+    printf("\nStart program for directory:\n%s\n" , ROOT);
 
     struct ElementTree head;
-    head.name = (char *) ".";
-    head.level = 0;
-
-    head.parent = (char *) malloc (MAX_LENGTH_PATH * sizeof(char));
-    head.parent[0] = '\0';
-    strcat(head.parent , ROOT);
-
-    printf("\nStart program for directory:\n%s\n" , head.parent);
+    head.name = (char *) CURRENT_DIR;
+    head.level = 1;
 
     stack<ElementTree> stack;
     stack.push(head);
-
 
     do {
         head = stack.top();
         stack.pop();
 
-        char* p = (char*) malloc (MAX_LENGTH_NAME_FILE * sizeof(char));
-        p[0] = '\0';
-        strcat(p, head.parent);
-        strcat(p, "/");
-        strcat(p, head.name);
-
-        if (chdir(p) < 0) {
-            exit(ERR_CHDIR);
+        //на (count_level_up + 1) надо подняться по дереву в сторону корня
+        int count_level_up = current_level - head.level;
+        for (int i = 0; i <= count_level_up; ++i) {
+            if (chdir(PARENT_DIR) < 0) {
+                printf(ERR_INFO_CHDIR);
+                exit(ERR_NUM_CHDIR);
+            }
         }
-        free(p);
 
-        if ((dp = opendir(".")) == NULL ) {
-            printf("directory is not accessible");
-            free(head.parent);
+        current_level = head.level;
+        if (chdir(head.name) < 0) {
+            printf(ERR_INFO_CHDIR);
+            exit(ERR_NUM_CHDIR);
+        }
+
+        DIR *dp;
+        if ((dp = opendir(CURRENT_DIR)) == NULL ) {
+            printf(DIR_IS_NOT_ASSESS);
             continue;
         }
 
+        //печатаем информацию о текущей папке
         printf("%*s%s\n", head.level * INDENT, "-(D) ", head.name);
-        head.level++ ;
 
+        struct dirent *dirp;
         while ((dirp = readdir(dp)) != NULL) {
-            if (strcmp(dirp->d_name, ".") == 0 || strcmp(dirp->d_name, "..") == 0) {
-//                    printf("%*s%s\n", head.level, "(D)", dirp->d_name);
+            if (strcmp(dirp->d_name, CURRENT_DIR) == 0 || strcmp(dirp->d_name, PARENT_DIR) == 0) {
                 continue;
             }
 
+            struct stat statbuf;
             if (lstat(dirp->d_name, &statbuf) < 0) {
-                printf("error call lstat");
+                printf(ERR_INFO_CALL_LSTAT);
                 continue;
             }
 
             if (S_ISDIR(statbuf.st_mode) == 0) {
-                printf("%*s%s\t[%ld b]\n", head.level * INDENT, "-(F) ", dirp->d_name, statbuf.st_size);
+                //печатаем информацию о текущем файле
+                printf("%*s%s\n", (head.level + 1) * INDENT, "-(F) ", dirp->d_name);
                 continue;
             }
 
+            //если досюда дошла программа, то dirp - папка
             struct ElementTree new_el;
             new_el.name = (char *) dirp->d_name;
-            new_el.level = head.level;
-
-            new_el.parent = (char *) malloc(MAX_LENGTH_PATH * sizeof(char));
-            new_el.parent[0] = '\0';
-            strcat(new_el.parent, head.parent);
-            strcat(new_el.parent, "/");
-            strcat(new_el.parent, head.name);
-
+            new_el.level = head.level + 1;
             stack.push(new_el);
         }
-
-        free(head.parent);
     } while(!stack.empty());
 
     return 0;
