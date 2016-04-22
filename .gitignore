@@ -1,0 +1,9 @@
+*/.idea/
+.*
+!.gitignore
+*.o
+*.ko
+*.order
+*.mod.o
+*.mod.c
+*.symvers
