@@ -1,0 +1,7 @@
+make
+insmod simple_proc.ko
+dmesg
+rmmod simple_proc
+echo "sadf" > /proc/simpleproc
+cat /proc/simpleproc
+lsmod
