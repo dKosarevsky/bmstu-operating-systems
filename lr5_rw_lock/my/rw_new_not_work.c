@@ -25,22 +25,6 @@ struct thread_param
 } *r_thread_params, *w_thread_params;
 
 
-void reader_work(int id) {
-	read_lock(&lck);
-	printk ("Reader #%d: %d\n", id, shmem);
-	read_unlock(&lck);
-
-}
-
-void writer_work(int id) {
-	write_lock(&lck);
-	int old_shmem;
-	old_shmem = shmem;
-	++shmem;
-	printk("Writer #%d: edit from %d to %d\n", id, old_shmem, shmem);
-	write_unlock(&lck);
-}
-
 void reader_thread(void *data)
 {
 	int i;
@@ -48,8 +32,9 @@ void reader_thread(void *data)
 	printk("Reader #%d started\n", param.id);
 	for (i = 0; i < param.attempt; i++)
 	{
-		reader_work(param.id);
-
+		read_lock(&lck);
+		printk ("Reader #%d: %d\n", i, shmem);
+		read_unlock(&lck);
 		msleep(get_random_int() % 20 * 10);
 	}
 	printk("Reader #%d finished\n", param.id);
@@ -60,10 +45,13 @@ void writer_thread(void *data)
 	int i;
 	struct thread_param param = *((struct thread_param *)data);
 	printk("Writer #%d started\n", param.id);
+	int old_shmem;
 	for (i = 0; i < param.attempt; i++)
 	{
-		writer_work(param.id);
-
+		write_lock(&lck);
+		old_shmem = shmem++;
+		printk("Writer #%d: edit from %d to %d\n", param.id, old_shmem, shmem);
+		write_unlock(&lck);
 		msleep(get_random_int() % 20 * 10);
 	}
 	printk("Writer #%d finished\n", param.id);	
