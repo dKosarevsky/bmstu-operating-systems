@@ -5,35 +5,35 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-void toUpperCaseChild(int socket) {
-    char buf; /* for data exchange between processes */
-
-    read(socket, &buf, 1);
-    printf("child: read '%c'\n", buf);
-
-    while (buf != '0') {
-        buf = (char) toupper(buf);  /* make it uppercase */
-        write(socket, &buf, 1);
-        printf("child: sent '%c'\n", buf);
-        read(socket, &buf, 1);
-        printf("child: read '%c'\n", buf);
-    }
-}
-
-void toUpperCaseParent(int socket) {
-    char buf; /* for data exchange between processes */
-
-    for (char sym = 'a'; sym <= 'z'; ++sym) {
-        write(socket, &sym, 1);
-        printf("\t\t\t\tparent: sent %c\n", sym);
-        read(socket, &buf, 1);
-        printf("\t\t\t\tparent: read '%c'\n", buf);
-    }
-    write(socket, "0", 1);
-    printf("\t\t\t\tparent: sent \"0\"\n");
-
-    wait(); /* wait for child to die */
-}
+//void toUpperCaseChild(int socket) {
+//    char buf; /* for data exchange between processes */
+//
+//    read(socket, &buf, 1);
+//    printf("child: read '%c'\n", buf);
+//
+//    while (buf != '0') {
+//        buf = (char) toupper(buf);  /* make it uppercase */
+//        write(socket, &buf, 1);
+//        printf("child: sent '%c'\n", buf);
+//        read(socket, &buf, 1);
+//        printf("child: read '%c'\n", buf);
+//    }
+//}
+//
+//void toUpperCaseParent(int socket) {
+//    char buf; /* for data exchange between processes */
+//
+//    for (char sym = 'a'; sym <= 'z'; ++sym) {
+//        write(socket, &sym, 1);
+//        printf("\t\t\t\tparent: sent %c\n", sym);
+//        read(socket, &buf, 1);
+//        printf("\t\t\t\tparent: read '%c'\n", buf);
+//    }
+//    write(socket, "0", 1);
+//    printf("\t\t\t\tparent: sent \"0\"\n");
+//
+//    wait(); /* wait for child to die */
+//}
 
 #define MAX_LEN_NUMBER 3
 
