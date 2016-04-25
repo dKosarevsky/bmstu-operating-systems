@@ -49,7 +49,6 @@ void reader_thread(void *data)
 	for (i = 0; i < param.attempt; i++)
 	{
 		reader_work(param.id);
-
 		msleep(get_random_int() % 20 * 10);
 	}
 	printk("Reader #%d finished\n", param.id);
@@ -63,7 +62,6 @@ void writer_thread(void *data)
 	for (i = 0; i < param.attempt; i++)
 	{
 		writer_work(param.id);
-
 		msleep(get_random_int() % 20 * 10);
 	}
 	printk("Writer #%d finished\n", param.id);	
