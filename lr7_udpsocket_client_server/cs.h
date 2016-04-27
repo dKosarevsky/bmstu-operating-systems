@@ -5,12 +5,12 @@
 #include <cstdio>
 #include <cstdlib>
 
-#define PORT 8883
+#define PORT 8888
 #define TIME_OUT_SERVER 10
 #define MAX_LEN_NUMBER 3
 
 
-static void handler(int);
+static void stop_server(int);
 
 void server();
 void client();

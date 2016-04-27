@@ -7,5 +7,3 @@
 *.mod.o
 *.mod.c
 *.symvers
-client
-server
