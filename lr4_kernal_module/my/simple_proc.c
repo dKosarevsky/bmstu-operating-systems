@@ -7,6 +7,13 @@ static char msg[128];
 static int len = 0;
 static int len_check = 1;
 
+/* Элементы procfs */
+struct proc_dir_entry *kmodule, *kmodule_dir, *kmodule_sym;
+static const char *ent = "simple_ent";
+static const char *dir = "simpleproc";
+static const char *sym_des = "simple_sym";
+static const char *sym_tar = "/proc/simpleproc/simple_ent";
+
 int simple_proc_open(struct inode * sp_inode, struct file *sp_file)
 {
 	printk(KERN_INFO "proc called open\n");
@@ -49,22 +56,27 @@ struct file_operations fops = {
 static int __init init_simpleproc (void)
 {
 	printk(KERN_INFO "init simple proc\n");
-	if (! proc_create("simpleproc",0666,NULL,&fops)) {
-		printk(KERN_INFO "ERROR! proc_create\n");
-		remove_proc_entry("simpleproc",NULL);
-		return -1;
-	}
+	
+	kmodule_dir = proc_mkdir(dir, NULL);
+
+	kmodule = proc_create(ent, 0644, kmodule_dir, &fops);
+	kmodule_sym = proc_symlink(sym_des, kmodule_dir, sym_tar);
+
 	return 0;
 }
 
 static void __exit exit_simpleproc(void)
 {
-	remove_proc_entry("simpleproc",NULL);
+	remove_proc_entry(kmodule_sym, kmodule_dir);
+	remove_proc_entry(kmodule, kmodule_dir);
+	remove_proc_entry(kmodule_dir, NULL);
+
 	printk(KERN_INFO "exit simple proc\n");
 }
 
 module_init(init_simpleproc);
 module_exit(exit_simpleproc);
-MODULE_AUTHOR("Soorej P");
+
+MODULE_AUTHOR("Ilya P");
 MODULE_LICENSE("GPL v3");
 MODULE_DESCRIPTION("A simple module to input/output using proc filesystem");

@@ -38,7 +38,7 @@ int main() {
 
     // Добавляем дескриптор в массив ожидания
     struct epoll_event server_event;
-    server_event.events = EPOLLIN| EPOLLET;
+    server_event.events = EPOLLIN | EPOLLET;
     server_event.data.fd = server_socket;
 
     if (epoll_ctl(epoll, EPOLL_CTL_ADD, server_socket, &server_event) < 0) {
