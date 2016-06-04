@@ -7,3 +7,14 @@
 *.mod.o
 *.mod.c
 *.symvers
+*.aux
+*.log
+*.out
+*.gz
+*.toc
+*.fdb_latexmk
+*.fls
+*.bbl
+*.blg
+*.dvi
+*.pdf
