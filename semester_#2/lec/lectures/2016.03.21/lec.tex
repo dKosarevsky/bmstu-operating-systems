@@ -1,0 +1,97 @@
+\clearpage
+\begin{flushright}
+	\textit{Лекция №5}
+	\textit{2016.03.21}
+\end{flushright}
+
+Вирт ФС – информация о процессах. Виртуальная – потому что не на диске. Текстовый файл с нужной инфомацией создается когда выполняется запрос на чтение соответствующей информации.
+Взаимодейсвтие с ядром заключается в чтении информации из ядра / записи новой информации в ядро.
+
+Примеры:\\
+"/proc/pci" - устройства, подключенные в текущий момент к шине PCI\
+"/proc/apm" – инфа о состоянии батареи ноутбука.
+
+Файлы и поддиректоррии ФС proc могут легко создаваться, регистрировать и прекращать ??? динамически. 
+
+Кроме ФС proc есть аналогичные sysfs – ФС имеет сходную функциональность и более удачную структуру, т.к. учтен опыт ФС  proc. Однако ФС proc является укоренившейся привычкой, и будет оставаться таковой.
+
+debugfs – представляет из себя отладочный интерфейс.
+
+Системными прогерами ФС proc широко используется и её возможности демонстрируются загружаемыми модулями ядра (Loadable Kernel Module (LKM))
+Драйверы устройств компилируются в виде модулей, ядро имеет модульную структуру, компилируется в виде загружаемых модулей. Он загружается когда в нем возникает потребность (динамически). Если драйвер скомпилирован как часть ядра, то его код и статические данные, даже когда драйвер не используется. Если драйвер скомпилирован как загружаемый модуль, то он будет занимать память, только если в нем возникла необходимость и он загружен в ядро. Отмечается, что заметные потери производительнстои при иссползовании загружаемых модулей ядра не происходит. ЗМЯ являются средставм адаптируемым к конкретным подключенным устройствам. 
+
+\lstinputlisting[language=c, caption=Структура proc\_dir\_entry]{listing/1.c} 
+
+Структура proc\_dir\_entry используется функциями для создания указателя, функцией create\_proc\_entry()
+
+Функция \verb|struct proc_dir_entry create_proc_entry() (const chat *name, mode_t mode, struct proc_dir_entry *base);|\\
+принимает:
+\begin{enumerate}
+	\item имя создаваемого файла;
+	\item права доступа;
+	\item подкаталог, где будет размещен файл (если = NULL, то в корневом каталоге proc); 
+\end{enumerate}
+возвращает: указатель на структуру. Если неудалось создать файл, будет возвращен NULL.
+
+Начиная с версия ядра 3.10 используется функция: \
+\begin{lstlisting}
+struct proc_dir_entry *proc_create_data(const char *name, umode_t mode, struct proc_dir_entry *parent, const struct file_operations *proc_fops, void *data);
+\end{lstlisting}
+Работает с ФС "/proc\_fs". Позволяют создать виртуальный файл в ФС proc. 
+
+Для удаления файла из ФС proc используется ф-я: 
+\begin{lstlisting}
+void remove_proc_entry(const char *name, struct proc_dir_entry *parent);
+\end{lstlisting}
+Если parent = NULL, то будет работать с корневым "/proc/".
+
+\begin{table}[H]
+\caption{Спиcок предопределенных переменных}
+\begin{tabular}{|l|l|}
+\hline
+переменная & путь \\
+\hline
+proc\_root\_fs & "/proc" \\
+proc\_net & "/proc/net" \\
+proc\_bus & "/proc/bus" \\
+proc\_root\_driver & "/proc/driver" \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{lstlisting}[caption=Последовательность действий для инициализации файла "/proc/net/test"]
+test_entry = create_proc_entry("test", 0600, proc, proc_net);
+test_entry -> nlink = 1;
+test_entry -> data = (void*) &test_data;
+test_entry -> read_proc = test_read_proc;
+test_entry -> write_proc = test_write_proc;
+\end{lstlisting}
+
+Это основные функции. create\_proc\_entry  вернул указатель, чтобы потом указать там поля. 2 callback функции, которые мы можем установить по своему усмотрению.
+
+\begin{lstlisting}[label=proc_mkdir, caption=создание поддиректории]
+struct proc_dir_entry *proc_mkdir(const char *name, struct proc_dir_entry *parent); 
+\end{lstlisting}
+
+\ref{proc_mkdir} - это kernael API, используется для создания поддиректорий в ФС proc. Нужно передать имя поддиректории и родительский каталог.
+
+\lstinputlisting[language=c, caption={Пример функции, которая использует данный системный вызов}]{listing/2.c} 
+
+Для доступа к информации ядра и записи информации в ядро используются ф-и (это не ф-и, относящиеся к структуре proc\_dir\_entry, это ф-и которые позволяют записать информацию в ядро и считать инфо из ядра):
+\begin{lstlisting}
+#include <asm/uaccess.h>
+//часто вместо copy_to_user используется sprintf, поскольку инфа записывается в буфер 
+unsigned long copy_to_user(void _user *to, const void *from, unsigned long n); 
+unsigned long copy_from_user(void *to, const void _user *from, unsigned long n);
+\end{lstlisting}
+
+\section{Загружаемые модули ядра}
+Статья \cite{IBM_lproc}. 
+Фортунки – доступ к ядру, недостаточно для лабораторной. Это всё нужно создать в поддиректории, используя mkdir.
+
+С версии ядра v2.6 поддерживается сборка модулей с использованием make файла. Для сборки соответствующего модуля необходимо создать make файл, содержащий 1 строку: 
+\begin{lstlisting}[label=proc_mkdir, caption=make file]
+obj-m += simple-lkm.o
+\end{lstlisting}
+
+Затем должны выполнить make файл. В резульатте этих дейсвтий должен появиться файл с расширением ".ko". Это способ именования загружаемых модулей. После того, как загрузим модуль в ядро, должны продемонстрировать, что мы его загрузили.
