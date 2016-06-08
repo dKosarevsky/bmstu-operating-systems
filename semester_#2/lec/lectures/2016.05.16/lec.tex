@@ -10,14 +10,14 @@
 Обычная ошибка EBUSY означает, что данная линия прерывания уже используется или не указали irqfshared. \\
 Ascii строка - текст, обозначающий соответствующее устройство. Этот текст - стринговая константа имени используется в $/proc/irq$, а также в $/proc/interrapt$ для указания пользователя.\\
 параметр №5) $devid$ - используется для разделения линий irq. Важно понимать, что когда обработчик прерывания освобождается, именно поле $devid$ обеспечивает возможность указания уникального нашего файла, чтобы удалить только нужный обработчик прерывания с линии прерывания.
-$freeirq(void *devid, int \text{линии})$\\
-$devid$ - обработчик.
+\verb|freeirq(void *devid, int линии)|\\
+\verb|devid| - обработчик.
 
 \lstinputlisting[language=c, caption={listing}]{listing/1.c} 
 
 \section{Обработчики нижних половин}
 
-\begin{lstlisting}
+\begin{lstlisting}[language=c]
 #define IRQF_TIMER (IRQF_TIMER | IRQF_NO_SUSPEND | IRQF_NO_THREAD)
 // IRQF_NO_SUSPEND - не гарантируется, что это прерывание будет будить системы, не отключать этот запрос прерывания при остановке
 // IRQF_NO_THREAD - прерывание не может быть запущено в виде потока
@@ -31,9 +31,9 @@ $devid$ - обработчик.
 \end{enumerate}	
 
 \subsection{Soft irq}
-определяются статически во время компиляции ядра. Описываются структурой $SOFT\_IRQ\_ACTION$. Эта структура представляет один вход.
+определяются статически во время компиляции ядра. Описываются структурой \verb|SOFT_IRQ_ACTION|. Эта структура представляет один вход.
 
-\begin{lstlisting}
+\begin{lstlisting}[language=c]
 // тут объявлен статический массив 
 // static struct softirq_action softirq_vec[32]
 // т.е. таких обработчиков не может быть больше  32
@@ -54,28 +54,28 @@ struct softirq_action {
 \hline
 Инндекс & приоритет &  комментарий\\
 \hline
-HI\_SOFTIRQ & 0 & высокоприоритетный тасклет \\
-TIMER\_SOFTIRQ  & 1 & таймеры\\
-NET\_TX\_SOFTIRQ &  2 & отправка сетевых пакетов\\
-NET\_RX\_SOFTIRQ &  3 & прием сетевых пакетов\\
-SCSI\_SOFTIRQ &  4 & блочные устройства подситемы SCSI\\
-TASKLET\_SOFTIRQ & 5 & тасклеты с обычным приоритетом \\
+\verb|HI_SOFTIRQ| & 0 & высокоприоритетный тасклет \\
+\verb|TIMER_SOFTIRQ|  & 1 & таймеры\\
+\verb|NET_TX_SOFTIRQ| &  2 & отправка сетевых пакетов\\
+\verb|NET_RX_SOFTIRQ| &  3 & прием сетевых пакетов\\
+\verb|SCSI_SOFTIRQ| &  4 & блочные устройства подситемы SCSI\\
+\verb|TASKLET_SOFTIRQ| & 5 & тасклеты с обычным приоритетом \\
 \hline
 \end{tabular}
 \end{table}
 
-Чтобы заработал обработчик SOFTIRQ его нужно зарегистрировать. Регистрация происходит с помощью функции $OPEN\_SOFTIRQ(\text{3 парамета})$:
+Чтобы заработал обработчик SOFTIRQ его нужно зарегистрировать. Регистрация происходит с помощью функции \verb|OPEN_SOFTIRQ3 парамета)|:
 \begin{enumerate}
 	\item индекс (один из таблицы)
 	\item функция обработчик
 	\item значения поля дата 
 \end{enumerate}
 
-Пример: $open\_softirq(NET\_TX\_SOFTIRQ, net\_tx\_action, NULL);$.
+Пример: \verb|open_softirq(NET_TX_SOFTIRQ, net_tx_action, NULL);|.
 
-Чтобы обработчик обозначить в системе как ожидающий обработки, необходима функция $raise\_softirq(...)$
+Чтобы обработчик обозначить в системе как ожидающий обработки, необходима функция \verb|raise_softirq(...)|
 
-\begin{lstlisting}
+\begin{lstlisting}[language=c]
 static irqreturn_t xxx_interrupt(int irq, void *dev_id, struct pt_regs *regs) {
 	//  ...
 	raise_softirq(xxx_SOFTIRQ);
@@ -93,10 +93,17 @@ do {
 } while (pending);
 \end{lstlisting}
 
-В системе имеется демон $KSOFTIRQD$ предназначенный для выполнения отложенных дейсвтий. При этом обработка отложенных действий типа $SOFTIRQ$ и тасклетов осуществляется с помощью набора потоков ядра по одному на каждый процессор. Если набрать $\# ps -Ahf | head -n12$ , то можно наблюдать следующее:
+В системе имеется демон $KSOFTIRQD$ предназначенный для выполнения отложенных дейсвтий. При этом обработка отложенных действий типа $SOFTIRQ$ и тасклетов осуществляется с помощью набора потоков ядра по одному на каждый процессор. 
+
+\begin{lstlisting}[language=bash, caption = codepsdem, label=code_ps_dem]
+# ps -Ahf | head -n12
+\end{lstlisting}
+
+Если набрать \ref{code_ps_dem} , то можно наблюдать \ref{table_handler_irq}
 
 \begin{table}[H]
 \caption{Обработчики Softirq}
+\label{table_handler_irq}
 \begin{tabular}{|l|l|l|l|l|l|}
 \hline
 UID & PID & PPID & LWP & $\cdots$ & TTY\\
@@ -117,18 +124,18 @@ SOFTIRQ не могут переходить в состояние sleep. Есл
 
 Статические макросы создаются в виде макросов в файле $linux/interrupt.h$:
 \begin{enumerate}
-	\item $DECLARE\_TASKLET(name, func, data);$ - создает тасклетЮ у которого счетчик ссылок равно 0.
-	\item $DECLARE\_TASKLET\_DISABLED(name, func, data);$ - поле ссылок равно 1 и запрещен.
+	\item \verb|DECLARE_TASKLET(name, func, data);| - создает тасклетЮ у которого счетчик ссылок равно 0.
+	\item \verb|DECLARE_TASKLET_DISABLED(name, func, data);| - поле ссылок равно 1 и запрещен.
 \end{enumerate}
 
-Могут быть созданы динамически с помощью функции $TASKLET\_INIT$
-\begin{lstlisting}
+Могут быть созданы динамически с помощью функции \verb|TASKLET_INIT|
+\begin{lstlisting}[language=c]
 struct tasklet *taskl;
 tasklet_init(taskl, taskl_handler, data);
 \end{lstlisting}
 
-Чтобы запланировать выполнение тасклета вызывается либо $tasklet\_shedule()$ либо $tasklet\_hi\_shedule()$ и передается 1 параметр на структурау $tasklet_struct$.
-\begin{lstlisting}[caption = Структура $tasklet\_struct$]
+Чтобы запланировать выполнение тасклета вызывается либо \verb|tasklet_shedule()| либо \verb|tasklet_hi_shedule()| и передается 1 параметр на структурау \verb|tasklet_struct|.
+\begin{lstlisting}[language=c, caption = Структура $tasklet\_struct$]
 struct tasklet_struct {
 	struct tasklet_struct *next;
 
@@ -143,31 +150,36 @@ struct tasklet_struct {
 };
 \end{lstlisting}
 
-Поле $state$ может иметь 1 из 2 состояний: $TASKLET\_STATE\_SHED$ и $TASKLET\_STATE\_RUN$.
+Поле $state$ может иметь 1 из 2 состояний: \verb|TASKLET_STATE_SHED| и \verb|TASKLET_STATE_RUN|.
 
-Запланированные на выполнение тасклеты хранятся в связных списках: $TASKLET\_VEC$ и $TASKLET\_HI\_VEC$.
+Запланированные на выполнение тасклеты хранятся в связных списках: \verb|TASKLET_VEC| и \verb|TASKLET_HI_VEC|.
 
 После планирования тасклет будет запущен 1 раз, даже если добавлен несколько раз, в отличие от $SOFTIRQ$.
 
 Для отключения тасклета используются:
 \begin{enumerate}
-	\item $tasklet\_disable()$ не сможет отменить тасклет, который уже выполняется;
-	\item $tasklet\_disable\_nosync()$ сможет.
+	\item \verb|tasklet_disable()| не сможет отменить тасклет, который уже выполняется;
+	\item \verb|tasklet_disable_nosync()| сможет.
 \end{enumerate}
 
-$void tasklet_handler(unsigned long data)$ - функция обработки тасклета.
+\verb|void tasklet_handler(unsigned long data)| - функция обработки тасклета.
 
-Особенностью тасклетов является то, что они не могут блокироваться, поэтому в них нельзя испоользовать семафоры. Если в тасклете используются общие данные с обработчиком прерывания или другим тасклетом, то нужно использовать spin блокировки.
+Особенностью тасклетов является то, что они не могут блокироваться, поэтому в них нельзя использовать семафоры. Если в тасклете используются общие данные с обработчиком прерывания или другим тасклетом, то нужно использовать spin блокировки.
 
 \subsection{Очереди работ (work queue)}
 Построены на базе task queue.
 
-$\# cat /proc/interrupt$ - чтобы посмотреть прерывания, доступные в системе.
+\begin{lstlisting}[language=bash, caption={посмотреть прерывания, доступные в системе}]
+# cat /proc/interrupt
+\end{lstlisting}
 
 Для идентификации драйвера устройства в системе зарезервированы старшие номера для обычных (партикулярных) устройств. Другие старшие номера могут динамически связываться, когда загружается linux. 
 
 Старший номер 94 - всегда DASD Device (Direct access stored device) - вторичная память: ЖД, ленточные диски, оптические.
 Старшие номера могут разделяться, т.е. один и тот же старший номер может использоваться множеством драйверов устройств.
-$\# cat /proc/devices$ - чтобы посмотреть старишие номер в системе.
+
+\begin{lstlisting}[language=bash, caption={посмотреть старишие номер в системе}]
+# cat /proc/devices
+\end{lstlisting}
 
 Младшие номера используются, чтобы драйверы отличали различные физические/логические устройства. DASD имеет 4 младших номера.
