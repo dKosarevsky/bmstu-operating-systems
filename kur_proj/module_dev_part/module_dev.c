@@ -60,6 +60,7 @@ static void my_timer_func(unsigned long ptr) {
 }
 
 void my_tasklet_function(void) {
+	//todo переделать на использование мьютекса
 	if (run) {
     	printk(KERN_INFO "kbleds: already return");
 		return;
@@ -106,8 +107,6 @@ struct proc_dir_entry *kmodule_dev, *kmodule_dir;
 
 static const char *dev = "dev";
 static const char *dir = "module_dir";
-
-
 
 DECLARE_TASKLET(my_tasklet, my_tasklet_function, NULL);
 

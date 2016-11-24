@@ -1,3 +1,12 @@
+/*
+
+This example reads from the default PCM device
+and writes to standard output for 5 seconds of data.
+
+*/
+
+/* Use the newer ALSA API */
+
 #define ALSA_PCM_NEW_HW_PARAMS_API
 
 #include <alsa/asoundlib.h>
@@ -102,27 +111,7 @@ int main() {
       fprintf(stderr, "short read, read %d frames\n", rc);
     }
 
-
-    // for (i = 0; i <  size - 1; ++i) {
-    //   if (buffer[i] == 0x7f && buffer[i + 1] == (char)0xff) {
-    //     ++flag;
-    //     ++i;
-        
-    //     if (flag > 8) {
-    //         printf("push\n");
-    //         system("echo 1 > /proc/module_dir/dev");
-
-    //         flag = 0;
-    //     }
-    //   } else {
-    //         flag = 0;
-    //   }
-
-      
-    // }
-
     rc = write(file, buffer, size);
-
 
     if (rc != size)
       fprintf(stderr, "short write: wrote %d bytes\n", rc);
